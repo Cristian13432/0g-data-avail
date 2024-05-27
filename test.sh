@@ -1,14 +1,19 @@
 #!/bin/bash
 
-result=0
-function tearDown {
+# Set up cleanup function to stop localstack and exit gracefully
+cleanup() {
     docker stop localstack-test
-    exit $result
+    exit $?
 }
-trap tearDown EXIT
+trap cleanup EXIT
 
+# Run the deploy command for localstack
 go run ./inabox/deploy/cmd -localstack-port=4570 -deploy-resources=false localstack
-go clean -testcache 
-# expand all arguments to script at the end of this line
-LOCALSTACK_PORT=4570 DEPLOY_LOCALSTACK=false go test -short ./... "$@"
-result=$?
+
+# Clean test cache before running tests
+go clean -testcache
+
+# Set environment variables and run tests
+export LOCALSTACK_PORT=4570
+export DEPLOY_LOCALSTACK=false
+go test -short ./... "$@"
